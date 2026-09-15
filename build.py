@@ -27,7 +27,8 @@ def render(source):
         cards = []
         for word in words:
             fields = ''.join(f'<div class="field"><dt>{esc(label)}</dt><dd>{esc(value)}</dd></div>' for label, value in word['fields'])
-            cards.append(f'<article><h3 lang="en">{esc(word["title"])}</h3><dl>{fields}</dl></article>')
+            spoken = re.sub(r'^\d+\.\s*', '', word['title'])
+            cards.append(f'<article><div class="word-heading"><h3 lang="en">{esc(word["title"])}</h3><button type="button" class="pronounce" data-word="{esc(spoken)}" aria-label="朗读 {esc(spoken)}">▶ 读音</button></div><dl>{fields}</dl></article>')
         sections.append(f'<section id="day-{date}" tabindex="-1"><header><h2>{date}</h2><span>{len(words)} 个词汇</span></header>{"".join(cards)}</section>')
     template = (ROOT / 'template.html').read_text(encoding='utf-8')
     return template.replace('{{NAV}}', ''.join(nav)).replace('{{CONTENT}}', ''.join(sections) or '<p>还没有词汇记录。</p>').replace('{{TOTAL}}', str(total)).replace('{{DAYS}}', str(len(days)))

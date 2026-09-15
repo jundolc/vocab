@@ -28,6 +28,13 @@ h2 {font-size:22px;margin:0;font-variant-numeric:tabular-nums}
 header span {color:#627088;font-size:14px}
 article {padding:24px 28px;background:white;border:1px solid #e0e6ef;border-radius:12px;margin:16px 0}
 h3 {font-size:26px;line-height:1.3;margin:0 0 18px;color:#183c70}
+.word-heading {display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.word-heading h3 {margin:0;overflow-wrap:anywhere}
+.pronounce {font:inherit;font-size:14px;color:#183c70;background:#edf4ff;border:1px solid #c8d9ef;border-radius:8px;padding:8px 14px;min-height:44px;cursor:pointer}
+.pronounce:hover {background:#dceaff}
+.pronounce:focus-visible {outline:3px solid #67afff;outline-offset:3px}
+.pronounce:disabled {opacity:.6;cursor:default}
+#speech-status {color:#627088;font-size:14px}
 dl {margin:0}
 .field {display:grid;grid-template-columns:130px minmax(0,1fr);gap:16px;margin:10px 0}
 dt {font-size:14px;color:#64748b;padding-top:2px}
@@ -45,7 +52,7 @@ article {padding:20px} .field {grid-template-columns:1fr;gap:2px;margin:14px 0}
 <body>
 <a class="skip" href="#content">跳转到词汇</a>
 <aside><div class="brand">Vocab</div><p>英语词汇本</p><div class="nav-label">学习日期</div><nav aria-label="按日期浏览">{{NAV}}</nav></aside>
-<main id="content"><h1>我的词汇记录</h1><p class="summary">{{DAYS}} 天记录 · {{TOTAL}} 个词汇</p>{{CONTENT}}</main>
+<main id="content"><h1>我的词汇记录</h1><p class="summary">{{DAYS}} 天记录 · {{TOTAL}} 个词汇</p><p id="speech-status" role="status" aria-live="polite"></p>{{CONTENT}}</main>
 <script>
 const links = [...document.querySelectorAll('nav a')];
 function activate(id) {
@@ -63,6 +70,47 @@ links.forEach(link => link.addEventListener('click', () => activate(link.hash.sl
 addEventListener('scroll', sync, {passive:true});
 addEventListener('hashchange', () => activate(location.hash.slice(1)));
 if (location.hash) activate(location.hash.slice(1)); else sync();
+const speechStatus = document.querySelector('#speech-status');
+const speechButtons = [...document.querySelectorAll('.pronounce')];
+if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {
+  speechStatus.textContent = '当前浏览器不支持朗读，请用 Safari 或 Chrome 打开。';
+  speechButtons.forEach(button => button.disabled = true);
+} else {
+  const synth = window.speechSynthesis;
+  let current = null;
+  let activeButton = null;
+  function resetButton() {
+    if (activeButton) activeButton.textContent = '▶ 读音';
+    activeButton = null;
+  }
+  speechButtons.forEach(button => button.addEventListener('click', () => {
+    current = null;
+    synth.cancel();
+    resetButton();
+    const utterance = new SpeechSynthesisUtterance(button.dataset.word);
+    utterance.lang = 'en-US';
+    utterance.rate = 0.85;
+    const voices = synth.getVoices();
+    const voice = voices.find(voice => /^en[-_]US$/i.test(voice.lang));
+    if (voice) utterance.voice = voice;
+    current = utterance;
+    activeButton = button;
+    button.textContent = '正在朗读…';
+    speechStatus.textContent = '';
+    utterance.onend = () => {
+      if (current !== utterance) return;
+      resetButton();
+      current = null;
+    };
+    utterance.onerror = () => {
+      if (current !== utterance) return;
+      resetButton();
+      current = null;
+      speechStatus.textContent = '朗读未成功，请检查设备的英语语音设置，或换用 Safari / Chrome。';
+    };
+    synth.speak(utterance);
+  }));
+}
 </script>
 </body>
 </html>
