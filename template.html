@@ -4,6 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Vocab · 英语词汇本</title>
+<script>
+if (location.pathname.endsWith('/template.html')) {
+  location.replace(new URL('index.html' + location.hash, location.href).href);
+}
+</script>
 <style>
 :root {color-scheme:light; font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif; color:#202d40; background:#f5f7fb; font-size:16px; line-height:1.7}
 * {box-sizing:border-box}
